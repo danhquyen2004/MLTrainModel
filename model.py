@@ -24,7 +24,7 @@ def load_and_preprocess_data(file_path):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # Sau khi huấn luyện mô hình
+    # lưu lại trình chuẩn hóa
     with open('scaler.pkl', 'wb') as f:
         pickle.dump(scaler, f)
 
@@ -74,24 +74,6 @@ def train_models_with_stacking(X_train, y_train):
             pickle.dump(model, f)  # Lưu mô hình
     
     return models
-
-
-# Dự đoán từ mô hình đã huấn luyện
-def predict_model(models, model_choice, new_data, scaler):
-    new_data_scaled = scaler.transform(new_data)
-
-    if model_choice == 'linear':
-        model = models['linear']
-    elif model_choice == 'ridge':
-        model = models['ridge']
-    elif model_choice == 'stacking':
-        model = models['stacking']
-    else:
-        model = models['mlp']
-
-    prediction = model.predict(new_data_scaled)
-
-    return prediction
 
 # Đánh giá mô hình
 def evaluate_model(models, X_test, y_test):
