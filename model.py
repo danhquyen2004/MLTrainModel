@@ -9,6 +9,7 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 from sklearn.ensemble import StackingRegressor
 from Mesureregression import NSE
 import pickle
+from sklearn.model_selection import cross_val_score, cross_validate
 
 # Đọc và tiền xử lý dữ liệu
 def load_and_preprocess_data(file_path):
@@ -94,6 +95,29 @@ def evaluate_model(models, X_test, y_test):
     
     return evaluations
 
+# Đánh giá mô hình với cross-validation
+def evaluate_model_with_cv(models, X_train, y_train):
+    evaluations = {}
+    
+    for name, model in models.items():
+        scoring = {
+            'R^2': 'r2',
+            'MAE': 'neg_mean_absolute_error',
+            'RMSE': 'neg_root_mean_squared_error'
+        }
+        
+        # Sử dụng cross_validate để tính toán trên nhiều chỉ số
+        cv_results = cross_validate(model, X_train, y_train, cv=5, scoring=scoring)
+        
+        # Tính trung bình cho các chỉ số đo lường
+        evaluations[name] = {
+            'R^2': np.mean(cv_results['test_R^2']),
+            'MAE': -np.mean(cv_results['test_MAE']),
+            'RMSE': -np.mean(cv_results['test_RMSE'])
+        }
+
+    return evaluations
+
 # Hàm vẽ biểu đồ giữa giá trị thực tế và dự đoán của từng mô hình
 def plot_actual_vs_predicted(y_test, y_pred, model_name):
     plt.figure(figsize=(10, 6))
@@ -115,14 +139,15 @@ X_train_scaled, X_test_scaled, y_train, y_test, scaler = load_and_preprocess_dat
 models = train_models_with_stacking(X_train_scaled, y_train)
 
 # Bước 3: Đánh giá mô hình trên tập kiểm tra
-evaluations = evaluate_model(models, X_test_scaled, y_test)
+#evaluations = evaluate_model(models, X_test_scaled, y_test)
 
+evaluations = evaluate_model_with_cv(models, X_train_scaled, y_train)
 # Bước 4: In ra kết quả đánh giá các mô hình và vẽ biểu đồ
 for model_name, eval_metrics in evaluations.items():
     print(f"Đánh giá mô hình: {model_name}")
     for metric, value in eval_metrics.items():
         print(f"{metric}: {value:.4f}")
-    
+
     # Dự đoán giá trị cho mô hình hiện tại
     y_pred = models[model_name].predict(X_test_scaled)
     
